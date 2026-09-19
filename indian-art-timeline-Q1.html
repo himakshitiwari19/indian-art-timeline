@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rekha — A Timeline of Indian Art</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Yatra+One&family=Karla:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --indigo: #1C2541;
+    --indigo-deep: #12182E;
+    --sandstone: #C9A66B;
+    --vermillion: #B7402F;
+    --vermillion-bright: #D3543F;
+    --ivory: #EFE6D3;
+    --ivory-dim: #C9C0AD;
+    --patina: #5C7A64;
+    --card: #232C4E;
+    --line: rgba(239,230,211,0.16);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--indigo);
+    color: var(--ivory);
+    font-family: 'Karla', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x:hidden;
+    position: relative;
+  }
+  #ambientCanvas{
+    position: fixed;
+    top:0; left:0;
+    width:100vw; height:100vh;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .wrap{ position: relative; z-index: 1; }
+  .wrap{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 56px 32px 80px;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    margin-bottom: 54px;
+  }
+  .eyebrow-note{
+    color: var(--sandstone);
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    margin: 0 0 10px;
+  }
+  h1{
+    font-family: 'Yatra One', cursive;
+    font-weight: 400;
+    font-size: clamp(48px, 8vw, 88px);
+    line-height: 0.95;
+    margin: 0 0 18px;
+    color: var(--ivory);
+  }
+  h1 span{ color: var(--vermillion-bright); }
+  .subtitle{
+    max-width: 620px;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--ivory-dim);
+    margin: 0;
+  }
+
+  /* ---------- Timeline ---------- */
+  .timeline-section{
+    position: relative;
+    margin-bottom: 8px;
+  }
+  .scale-note{
+    font-size: 13px;
+    color: var(--ivory-dim);
+    font-style: italic;
+    margin: 0 0 34px;
+  }
+  .spine-outer{
+    position: relative;
+    height: 190px;
+    margin: 0 0 4px;
+  }
+  .spine-line{
+    position: absolute;
+    top: 96px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--sandstone), var(--patina), var(--vermillion));
+    opacity: 0.5;
+  }
+  .node{
+    position: absolute;
+    top: 96px;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    padding: 0;
+  }
+  .node .date{
+    position: absolute;
+    bottom: 30px;
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--ivory-dim);
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+  .node .dot{
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 2px solid var(--sandstone);
+    transition: all 0.2s ease;
+    z-index: 2;
+  }
+  .node .name{
+    position: absolute;
+    top: 30px;
+    width: 120px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ivory-dim);
+    line-height: 1.3;
+    transition: color 0.2s ease;
+  }
+  .node:hover .dot{
+    border-color: var(--vermillion-bright);
+    transform: scale(1.15);
+  }
+  .node:hover .name{ color: var(--ivory); }
+  .node.active .dot{
+    background: var(--vermillion);
+    border-color: var(--vermillion-bright);
+    box-shadow: 0 0 0 5px rgba(183,64,47,0.22);
+    transform: scale(1.2);
+  }
+  .node.active .name{ color: var(--vermillion-bright); }
+  .node.active .date{ color: var(--vermillion-bright); }
+  .node:focus-visible .dot{ outline: 2px solid var(--ivory); outline-offset: 3px; }
+
+  /* ---------- Detail panel ---------- */
+  .panel{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 40px;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+  .panel-icon{
+    width: 220px;
+    height: 220px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: var(--indigo-deep);
+    flex-shrink: 0;
+  }
+  .panel-icon svg{ width: 78%; height: 78%; }
+  .panel-body h2{
+    font-family: 'Yatra One', cursive;
+    font-weight: 400;
+    font-size: 34px;
+    margin: 0 0 4px;
+    color: var(--ivory);
+  }
+  .panel-meta{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 24px;
+    margin: 14px 0 20px;
+    padding: 16px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .panel-meta div{ font-size: 13px; }
+  .panel-meta .label{
+    display:block;
+    color: var(--sandstone);
+    margin-bottom: 2px;
+  }
+  .panel-body p{
+    font-size: 15.5px;
+    line-height: 1.7;
+    color: var(--ivory-dim);
+    margin: 0 0 16px;
+    max-width: 62ch;
+  }
+  .fun-fact{
+    display: flex;
+    gap: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ivory);
+    background: rgba(201,166,107,0.09);
+    border-left: 2px solid var(--sandstone);
+    padding: 12px 16px;
+    max-width: 62ch;
+  }
+  .fun-fact b{ color: var(--sandstone); font-weight: 700; }
+
+  /* ---------- Icon motion ---------- */
+  .panel-icon{ position: relative; overflow: hidden; }
+  .panel-icon svg{ position: relative; z-index: 2; }
+  .panel-icon.spin-ring::before{
+    content:'';
+    position: absolute;
+    width: 168px;
+    height: 168px;
+    border-radius: 50%;
+    border: 1px dashed rgba(183,64,47,0.5);
+    animation: spin 9s linear infinite;
+  }
+  .panel-icon.spin-ring::after{
+    content:'';
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border-top: 1px solid var(--vermillion-bright);
+    animation: spin 4.5s linear infinite reverse;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+  .panel-icon.pulse svg{ animation: breathe 3.2s ease-in-out infinite; }
+  @keyframes breathe{ 0%,100%{ opacity:0.85; } 50%{ opacity:1; transform: scale(1.03); } }
+
+  /* ---------- Second row: map + durations ---------- */
+  .lower-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 24px;
+  }
+  .lower-card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 28px 30px;
+  }
+  .lower-card h3{
+    font-family: 'Yatra One', cursive;
+    font-weight: 400;
+    font-size: 21px;
+    margin: 0 0 4px;
+    color: var(--ivory);
+  }
+  .lower-card .lower-note{
+    font-size: 12.5px;
+    color: var(--ivory-dim);
+    font-style: italic;
+    margin: 0 0 18px;
+  }
+
+  /* map */
+  .map-box{ display:flex; justify-content:center; }
+  .map-box svg{ width: 100%; max-width: 260px; height: auto; }
+  .india-outline{ fill: rgba(201,166,107,0.06); stroke: var(--sandstone); stroke-width: 1.4; }
+  .map-pin{ cursor: pointer; }
+  .map-pin circle.core{
+    fill: var(--ivory-dim);
+    stroke: var(--indigo-deep);
+    stroke-width: 1.5;
+    transition: all 0.2s ease;
+  }
+  .map-pin text{
+    fill: var(--ivory-dim);
+    font-size: 8px;
+    font-family: 'Karla', sans-serif;
+    transition: fill 0.2s ease;
+  }
+  .map-pin.active circle.core{
+    fill: var(--vermillion-bright);
+    r: 6;
+  }
+  .map-pin.active text{ fill: var(--ivory); font-weight: 700; }
+  .map-pin.active circle.ring{
+    animation: ping 1.6s ease-out infinite;
+  }
+  @keyframes ping{
+    0%{ r:6; opacity:0.7; }
+    100%{ r:16; opacity:0; }
+  }
+  .map-dash{ stroke: var(--ivory-dim); stroke-width:0.8; stroke-dasharray: 2 2; opacity:0.5; }
+
+  /* duration chart */
+  .dur-row{
+    display:grid;
+    grid-template-columns: 92px 1fr 60px;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 12px;
+    cursor: pointer;
+  }
+  .dur-row .dur-label{
+    font-size: 12px;
+    color: var(--ivory-dim);
+    text-align: right;
+    transition: color 0.2s ease;
+  }
+  .dur-track{
+    background: rgba(239,230,211,0.08);
+    border-radius: 2px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .dur-fill{
+    height: 100%;
+    border-radius: 2px;
+    background: var(--patina);
+    transition: all 0.2s ease;
+    width: 0;
+  }
+  .dur-row .dur-val{
+    font-size: 11.5px;
+    color: var(--ivory-dim);
+  }
+  .dur-row.active .dur-label{ color: var(--vermillion-bright); font-weight: 700; }
+  .dur-row.active .dur-fill{ background: var(--vermillion-bright); }
+
+  /* ---------- Continuous idle motions per era ---------- */
+  .motion-rotate svg{ transform-origin: 50% 62%; animation: rotateSlow 12s linear infinite; }
+  @keyframes rotateSlow{ to{ transform: rotate(360deg); } }
+
+  .motion-flicker svg path,
+  .motion-flicker svg circle{ animation: flicker 2.6s ease-in-out infinite; }
+  @keyframes flicker{ 0%,100%{ opacity:1; } 50%{ opacity:0.55; } }
+
+  .motion-sway svg{ transform-origin: 50% 90%; animation: sway 3.4s ease-in-out infinite; }
+  @keyframes sway{ 0%,100%{ transform: rotate(-2deg); } 50%{ transform: rotate(2deg); } }
+
+  .motion-shimmer svg path{ animation: shimmer 2.2s ease-in-out infinite; }
+  .motion-shimmer svg path:nth-child(odd){ animation-delay: 0.4s; }
+  @keyframes shimmer{ 0%,100%{ stroke-opacity: 0.6; } 50%{ stroke-opacity: 1; } }
+
+  .motion-wash svg{ animation: washBleed 4s ease-in-out infinite; }
+  @keyframes washBleed{ 0%,100%{ filter: blur(0); opacity:1; } 50%{ filter: blur(0.6px); opacity:0.8; } }
+
+  .motion-burst svg{ transform-origin: 50% 50%; animation: rotateSlow 18s linear infinite; }
+  .panel-icon svg path,
+  .panel-icon svg circle,
+  .panel-icon svg ellipse,
+  .panel-icon svg rect{
+    animation: none;
+  }
+  .panel-icon.drawing svg *{
+    stroke-dasharray: var(--len, 200);
+    stroke-dashoffset: var(--len, 200);
+    animation: draw 1.4s ease forwards;
+  }
+  @keyframes draw{ to{ stroke-dashoffset: 0; } }
+
+  /* ---------- Play control ---------- */
+  .play-row{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    margin: 18px 0 26px;
+  }
+  .play-btn{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    background: var(--card);
+    border: 1px solid var(--sandstone);
+    color: var(--ivory);
+    font-family: 'Karla', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .play-btn:hover{ background: var(--vermillion); border-color: var(--vermillion-bright); }
+  .play-btn .ico{ display:inline-block; width:0; height:0; }
+  .play-btn.playing .ico.play-shape{
+    width: 10px; height: 10px;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-bottom: none;
+    background: var(--ivory);
+  }
+  .progress-track{
+    flex: 1;
+    height: 3px;
+    background: var(--line);
+    border-radius: 2px;
+    position: relative;
+    max-width: 340px;
+  }
+  .progress-fill{
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width: 12.5%;
+    background: var(--vermillion-bright);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  @media (max-width: 720px){
+    .lower-grid{ grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 720px){
+    .wrap{ padding: 36px 18px 60px; }
+    .spine-outer{ height: 720px; }
+    .spine-line{ display:none; }
+    .node{ position: relative !important; top:auto !important; left:auto !important; transform:none; flex-direction: row; align-items:center; gap:14px; margin-bottom: 26px; width:100%; }
+    .node .date{ position: static; width:64px; text-align:right; }
+    .node .dot{ position:static; }
+    .node .name{ position: static; width:auto; text-align:left; }
+    .panel{ grid-template-columns: 1fr; }
+    .panel-icon{ width: 140px; height:140px; margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+<canvas id="ambientCanvas"></canvas>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow-note">Interactive timeline · Indian art history</p>
+    <h1>Rekha<span>.</span></h1>
+    <p class="subtitle">Rekha — "the line" in Sanskrit — traces eight moments in Indian art, from a bronze dancer buried under Mohenjo-daro to the canvases of the present day. Select a marker to open it.</p>
+  </header>
+
+  <div class="timeline-section">
+    <p class="scale-note">Spacing along the line follows the actual gaps between periods — some eras sit centuries apart, others only decades.</p>
+    <div class="spine-outer" id="spine">
+      <div class="spine-line"></div>
+      <!-- nodes injected by JS -->
+    </div>
+    <div class="play-row">
+      <button class="play-btn" id="playBtn">
+        <span class="ico play-shape" id="playIcon" style="border-left:8px solid var(--ivory); background:none;"></span>
+        <span id="playLabel">Walk through time</span>
+      </button>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel">
+    <!-- filled by JS -->
+  </div>
+
+  <div class="lower-grid">
+    <div class="lower-card">
+      <h3>Where it happened</h3>
+      <p class="lower-note">Approximate, illustrative map — not to scale.</p>
+      <div class="map-box">
+        <svg viewBox="0 0 300 340">
+          <path class="india-outline" d="M110,10 C150,4 190,10 205,22 C230,36 258,55 260,78 C262,98 240,110 232,130 C224,150 232,168 224,190 C214,214 200,224 196,246 C190,272 178,292 160,316 C150,328 140,330 132,318 C116,294 108,266 96,244 C86,224 68,214 66,190 C64,168 78,156 78,136 C78,114 62,100 68,80 C74,58 90,40 108,26 Z"/>
+          <line class="map-dash" x1="42" y1="150" x2="70" y2="140"/>
+          <g id="mapPins"></g>
+        </svg>
+      </div>
+    </div>
+    <div class="lower-card">
+      <h3>How long each era lasted</h3>
+      <p class="lower-note">Length of bar = approximate years the style was dominant.</p>
+      <div id="durChart"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const eras = [
+  {
+    id: 'indus',
+    motion: 'sway',
+    years: 700,
+    map: { x: 40, y: 148, label: 'Mohenjo-daro (Pakistan)' },
+    x: 2,
+    date: 'c. 2600 – 1900 BCE',
+    name: 'Indus Valley',
+    title: 'Indus Valley Civilization',
+    location: 'Mohenjo-daro & Harappa, present-day Pakistan',
+    material: 'Bronze (lost-wax cast), steatite',
+    accent: '#C9A66B',
+    desc: "The earliest artifacts of Indian art come from the cities of the Indus Valley. The Dancing Girl, a 10.5cm bronze figure cast using the lost-wax method, shows a confident young woman standing with one hand on her hip, bangles stacked along her arm — remarkably naturalistic for a civilization over 4,500 years old. Alongside her, thousands of small steatite seals carved with animals and an undeciphered script were used to stamp goods for trade.",
+    fact: "Lost-wax casting, the technique used for the Dancing Girl, is still practiced by bronze artisans in parts of India today — a nearly unbroken 4,500-year lineage.",
+    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#C9A66B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M50 12 C 42 12 38 20 40 28 C 34 30 30 38 33 46 L 30 60 C 28 68 32 78 40 82 L 42 90 M 40 82 L 46 90"/>
+      <path d="M60 46 L 30 46"/>
+      <circle cx="50" cy="20" r="6"/>
+      <path d="M58 46 C 65 44 68 36 63 30"/>
+      <circle cx="20" cy="55" r="9"/>
+      <path d="M13 51 L 27 59 M 13 59 L 27 51"/>
+    </svg>`
+  },
+  {
+    id: 'mauryan',
+    motion: 'rotate',
+    years: 137,
+    map: { x: 150, y: 110, label: 'Sarnath' },
+    x: 18,
+    date: 'c. 322 – 185 BCE',
+    name: 'Mauryan Empire',
+    title: 'Mauryan Period',
+    location: 'Sarnath, Uttar Pradesh',
+    material: 'Polished sandstone (Chunar stone)',
+    accent: '#C9A66B',
+    desc: "Emperor Ashoka, having converted to Buddhism after the bloodshed of the Kalinga war, had sandstone pillars erected across his empire, each inscribed with edicts on non-violence and moral rule. The Lion Capital of Sarnath — four back-to-back lions atop a wheel-carved abacus — crowned one such pillar. Its mirror-like polish, achieved without modern tools, was a technical feat that later Indian sculpture rarely matched.",
+    fact: "The Lion Capital of Sarnath was adopted as independent India's national emblem in 1950, and the wheel beneath the lions appears at the centre of the national flag.",
+    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#C9A66B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="50" cy="22" r="10"/>
+      <path d="M50 12 L50 32 M40 22 L60 22 M43 15 L57 29 M57 15 L43 29"/>
+      <ellipse cx="50" cy="36" rx="20" ry="6"/>
+      <path d="M32 36 L32 86 M68 36 L68 86"/>
+      <path d="M26 86 L74 86"/>
+      <path d="M32 50 L68 50 M32 64 L68 64 M32 78 L68 78"/>
+    </svg>`
+  },
+  {
+    id: 'gupta',
+    motion: 'flicker',
+    years: 230,
+    map: { x: 110, y: 170, label: 'Ajanta' },
+    x: 34,
+    date: 'c. 320 – 550 CE',
+    name: 'Gupta Period',
+    title: 'Gupta Period',
+    location: 'Ajanta Caves, Maharashtra & Sarnath',
+    material: 'Rock-cut fresco (tempera on lime plaster), sandstone',
+    accent: '#5C7A64',
+    desc: "Often called the classical age of Indian art, the Gupta period produced the murals of the Ajanta caves — Buddhist narrative paintings covering entire cave walls in flowing line and soft colour, made by mixing natural pigments with a lime-plaster binder. The same period gave rise to the Sarnath school of sculpture, whose serene, downcast-eyed Buddha images set the visual template for Buddhist art across Asia for centuries.",
+    fact: "The Ajanta caves were abandoned and swallowed by jungle for over a thousand years until a British officer on a tiger hunt rediscovered them in 1819.",
+    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#5C7A64" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="50" cy="30" r="12"/>
+      <path d="M38 30 C 32 30 30 24 34 20"/>
+      <path d="M50 42 C 30 42 24 58 24 78 L 76 78 C 76 58 70 42 50 42 Z"/>
+      <path d="M36 78 C 36 62 42 52 50 52 C 58 52 64 62 64 78"/>
+      <circle cx="45" cy="28" r="1.4" fill="#5C7A64"/>
+      <circle cx="55" cy="28" r="1.4" fill="#5C7A64"/>
+    </svg>`
+  },
+  {
+    id: 'chola',
+    motion: 'rotate',
+    years: 400,
+    map: { x: 140, y: 290, label: 'Thanjavur' },
+    x: 50,
+    date: 'c. 850 – 1250 CE',
+    name: 'Chola Dynasty',
+    title: 'Chola Dynasty',
+    location: 'Thanjavur & the Kaveri delta, Tamil Nadu',
+    material: 'Bronze (lost-wax cast)',
+    accent: '#B7402F',
+    desc: "The Chola kings of South India perfected the lost-wax bronze technique to produce some of the most technically and spiritually sophisticated sculpture in Indian art. The Nataraja — Shiva as Lord of the Dance, encircled by a ring of cosmic fire, one foot raised, hair flying — depicts creation and destruction as a single continuous rhythm. These bronzes were carried in temple processions rather than kept static, so their poses were built for movement.",
+    fact: "Each Nataraja bronze was cast solid using a wax model that was destroyed in the process — meaning no two are ever exactly identical, even from the same workshop.",
+    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#B7402F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="50" cy="50" r="38"/>
+      <circle cx="50" cy="30" r="7"/>
+      <path d="M50 37 L50 55 M50 45 L34 38 M50 45 L66 36 M50 55 L38 72 M50 55 L64 66"/>
+      <path d="M43 25 C 36 20 30 22 30 28 M57 25 C 64 20 70 22 70 28"/>
+    </svg>`
+  },
+  {
+    id: 'mughal',
+    motion: 'shimmer',
+    years: 331,
+    map: { x: 140, y: 70, label: 'Agra / Delhi' },
+    x: 65,
+    date: '1526 – 1857 CE',
+    name: 'Mughal Empire',
+    title: 'Mughal Period',
+    location: 'Delhi, Agra & Lahore',
+    material: 'Opaque watercolour and gold on paper; inlaid marble',
+    accent: '#C9A66B',
+    desc: "Mughal emperors brought Persian miniature painters to their courts and fused their style with Indian subject matter, producing manuscripts like the Akbarnama — densely detailed paintings of battles, court life, and hunts, often only a few inches across yet packed with individually rendered figures. The same era's architectural ambition produced the Taj Mahal, an inlaid-marble mausoleum built by Shah Jahan for his wife Mumtaz Mahal.",
+    fact: "Mughal miniature workshops divided labour like an assembly line — one artist sketched, another painted faces, another handled only gold detailing.",
+    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#C9A66B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M50 15 C 38 15 32 26 32 36 L 68 36 C 68 26 62 15 50 15 Z"/>
+      <circle cx="50" cy="12" r="2.4" fill="#C9A66B"/>
+      <path d="M50 8 L50 12"/>
+      <rect x="26" y="36" width="48" height="46" rx="1"/>
+      <path d="M26 82 L20 90 L80 90 L74 82"/>
+      <path d="M42 90 L42 62 C 42 55 58 55 58 62 L58 90"/>
+    </svg>`
+  },
+  {
+    id: 'company',
+    motion: 'flicker',
+    years: 100,
+    map: { x: 222, y: 156, label: 'Calcutta' },
+    x: 78,
+    date: '1757 – 1857 CE',
+    name: 'Company School',
+    title: 'Company Painting',
+    location: 'Calcutta, Delhi, Patna & Madras',
+    material: 'Watercolour on European paper',
+    accent: '#5C7A64',
+    desc: "As the British East India Company expanded its rule, Indian artists trained in Mughal miniature traditions began painting for European patrons — recording local trades, festivals, castes, flora and fauna in a hybrid style: Mughal precision married to European perspective and shading, on imported paper. Once dismissed by historians as merely decorative, Company painting is now studied as a visual archive of everyday life under colonial rule, made by Indian hands for a foreign gaze.",
+    fact: "Company painters were routinely uncredited by name in British collections for over a century — most works are catalogued only by the city or workshop where they were made.",
+    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#5C7A64" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="20" y="18" width="60" height="72" rx="1"/>
+      <rect x="28" y="26" width="44" height="44" rx="1"/>
+      <path d="M28 62 L42 46 L52 56 L62 42 L72 62"/>
+      <circle cx="60" cy="36" r="4"/>
+      <path d="M20 82 L80 82"/>
+    </svg>`
+  },
+  {
+    id: 'bengal',
+    motion: 'wash',
+    years: 42,
+    map: { x: 208, y: 144, label: 'Calcutta' },
+    x: 88,
+    date: '1905 – 1947',
+    name: 'Bengal School',
+    title: 'Bengal School / Nationalist Art',
+    location: 'Calcutta',
+    material: 'Wash technique — thin layers of watercolour, tempera',
+    accent: '#B7402F',
+    desc: "Reacting against both British academic realism and mass-produced colonial imagery, Abanindranath Tagore and his students developed a soft, layered wash technique drawing on Mughal and Japanese influence, deliberately rejecting Western oil painting. His painting Bharat Mata — a saffron-robed goddess personifying the nation — became a rallying image for the independence movement, tying art directly to the swadeshi cause.",
+    fact: "The wash technique involved applying and partially washing off up to a dozen thin layers of colour, giving the finished paintings their characteristic soft, misty quality.",
+    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#B7402F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M50 20 C 58 30 58 42 50 50 C 42 42 42 30 50 20 Z"/>
+      <path d="M50 50 L50 82"/>
+      <path d="M50 60 C 40 60 32 66 30 76 M50 60 C 60 60 68 66 70 76"/>
+      <path d="M38 34 C 30 34 26 40 28 46 M62 34 C 70 34 74 40 72 46"/>
+    </svg>`
+  },
+  {
+    id: 'contemporary',
+    motion: 'burst',
+    years: 79,
+    map: { x: 100, y: 190, label: 'Bombay & beyond' },
+    x: 98,
+    date: '1947 – present',
+    name: 'Contemporary',
+    title: 'Contemporary Indian Art',
+    location: 'Bombay, Delhi, and a global diaspora',
+    material: 'Oil, mixed media, installation, digital',
+    accent: '#B7402F',
+    desc: "Formed within months of independence, the Progressive Artists' Group — including F.N. Souza, S.H. Raza, and M.F. Husain — deliberately broke from both revivalist nationalism and colonial academic style, absorbing Cubism and Expressionism to build a modern visual language that was unmistakably Indian in subject. Their successors now work across painting, sculpture, installation and digital media, and Indian contemporary art holds a permanent place in the international market and museum circuit.",
+    fact: "In 2016, a single canvas by S.H. Raza sold for over ₹22 crore (roughly $3.5 million) at auction — among the highest prices ever paid for a modern Indian painting.",
+    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#B7402F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M50 50 L20 30 M50 50 L80 30 M50 50 L20 74 M50 50 L80 74 M50 50 L50 14 M50 50 L50 88"/>
+      <circle cx="50" cy="50" r="8"/>
+    </svg>`
+  }
+];
+
+const spine = document.getElementById('spine');
+const panel = document.getElementById('panel');
+
+eras.forEach((era, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'node';
+  btn.style.left = era.x + '%';
+  btn.setAttribute('data-id', era.id);
+  btn.innerHTML = `
+    <span class="date">${era.date}</span>
+    <span class="dot"></span>
+    <span class="name">${era.name}</span>
+  `;
+  btn.addEventListener('click', () => selectEra(era.id));
+  spine.appendChild(btn);
+});
+
+const mapPinsGroup = document.getElementById('mapPins');
+eras.forEach(era => {
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('class', 'map-pin');
+  g.setAttribute('data-id', era.id);
+  g.style.cursor = 'pointer';
+  g.innerHTML = `
+    <circle class="ring" cx="${era.map.x}" cy="${era.map.y}" r="6" fill="none" stroke="currentColor" style="color:var(--vermillion-bright)"/>
+    <circle class="core" cx="${era.map.x}" cy="${era.map.y}" r="4"/>
+    <text x="${era.map.x}" y="${era.map.y - 10}" text-anchor="middle">${era.map.label}</text>
+  `;
+  g.addEventListener('click', () => selectEra(era.id));
+  mapPinsGroup.appendChild(g);
+});
+
+const durChart = document.getElementById('durChart');
+const maxYears = Math.max(...eras.map(e => e.years));
+eras.forEach(era => {
+  const row = document.createElement('div');
+  row.className = 'dur-row';
+  row.setAttribute('data-id', era.id);
+  row.innerHTML = `
+    <span class="dur-label">${era.name}</span>
+    <span class="dur-track"><span class="dur-fill" style="width:${(era.years/maxYears*100).toFixed(0)}%"></span></span>
+    <span class="dur-val">${era.years} yrs</span>
+  `;
+  row.addEventListener('click', () => selectEra(era.id));
+  durChart.appendChild(row);
+});
+
+function selectEra(id){
+  const era = eras.find(e => e.id === id);
+
+  document.querySelectorAll('.node').forEach(n => {
+    n.classList.toggle('active', n.getAttribute('data-id') === id);
+  });
+  document.querySelectorAll('.map-pin').forEach(p => {
+    p.classList.toggle('active', p.getAttribute('data-id') === id);
+  });
+  document.querySelectorAll('.dur-row').forEach(r => {
+    r.classList.toggle('active', r.getAttribute('data-id') === id);
+  });
+
+  const iconClass = id === 'chola' ? 'panel-icon spin-ring drawing' : 'panel-icon pulse drawing';
+
+  panel.innerHTML = `
+    <div class="${iconClass}" id="panelIcon">${era.svg}</div>
+    <div class="panel-body">
+      <h2>${era.title}</h2>
+      <div class="panel-meta">
+        <div><span class="label">Period</span>${era.date}</div>
+        <div><span class="label">Location</span>${era.location}</div>
+        <div><span class="label">Material</span>${era.material}</div>
+      </div>
+      <p>${era.desc}</p>
+      <div class="fun-fact"><span>&#9679;</span><span><b>Did you know —</b> ${era.fact}</span></div>
+    </div>
+  `;
+
+  // measure and animate each stroke path drawing in
+  const shapes = panel.querySelectorAll('#panelIcon svg path, #panelIcon svg circle, #panelIcon svg ellipse, #panelIcon svg rect');
+  let maxDelay = 0;
+  shapes.forEach((shape, i) => {
+    let len = 100;
+    try{ len = shape.getTotalLength ? shape.getTotalLength() : 100; }catch(e){}
+    shape.style.setProperty('--len', len);
+    const delay = i * 0.06;
+    shape.style.animationDelay = delay + 's';
+    maxDelay = Math.max(maxDelay, delay);
+  });
+
+  // after the draw-in finishes, hand off to a continuous idle motion loop
+  const iconEl = document.getElementById('panelIcon');
+  setTimeout(() => {
+    iconEl.classList.add('motion-' + era.motion);
+  }, (maxDelay + 1.4) * 1000);
+
+  const idx = eras.findIndex(e => e.id === id);
+  document.getElementById('progressFill').style.width = (((idx + 1) / eras.length) * 100) + '%';
+}
+
+selectEra('indus');
+
+// ---------- Ambient living background: drifting gold/ember motes ----------
+(function ambient(){
+  const canvas = document.getElementById('ambientCanvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, particles;
+
+  function resize(){
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const colors = ['rgba(201,166,107,0.55)', 'rgba(183,64,47,0.4)', 'rgba(239,230,211,0.3)'];
+  const count = Math.min(60, Math.floor(w / 22));
+  particles = Array.from({length: count}, () => ({
+    x: Math.random() * w,
+    y: Math.random() * h,
+    r: 0.6 + Math.random() * 1.8,
+    speedY: 0.08 + Math.random() * 0.22,
+    driftX: (Math.random() - 0.5) * 0.15,
+    phase: Math.random() * Math.PI * 2,
+    color: colors[Math.floor(Math.random() * colors.length)]
+  }));
+
+  function tick(t){
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => {
+      p.y -= p.speedY;
+      p.x += p.driftX + Math.sin(t / 2000 + p.phase) * 0.08;
+      if(p.y < -10){ p.y = h + 10; p.x = Math.random() * w; }
+      if(p.x < -10) p.x = w + 10;
+      if(p.x > w + 10) p.x = -10;
+      const twinkle = 0.5 + 0.5 * Math.sin(t / 900 + p.phase);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = 0.3 + twinkle * 0.5;
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+
+// ---------- Autoplay ----------
+let playing = false;
+let playTimer = null;
+const playBtn = document.getElementById('playBtn');
+const playLabel = document.getElementById('playLabel');
+const playIcon = document.getElementById('playIcon');
+
+function advance(){
+  const current = document.querySelector('.node.active').getAttribute('data-id');
+  const idx = eras.findIndex(e => e.id === current);
+  const next = eras[(idx + 1) % eras.length];
+  selectEra(next.id);
+}
+
+playBtn.addEventListener('click', () => {
+  playing = !playing;
+  playBtn.classList.toggle('playing', playing);
+  if(playing){
+    playLabel.textContent = 'Pause';
+    playIcon.style.borderLeft = 'none';
+    playIcon.style.width = '10px';
+    playIcon.style.height = '10px';
+    playIcon.style.background = 'var(--ivory)';
+    advance();
+    playTimer = setInterval(advance, 3800);
+  } else {
+    playLabel.textContent = 'Walk through time';
+    playIcon.style.background = 'none';
+    playIcon.style.width = '0';
+    playIcon.style.height = '0';
+    playIcon.style.borderLeft = '8px solid var(--ivory)';
+    clearInterval(playTimer);
+  }
+});
+
+// stop autoplay if user manually clicks a node/map pin/dur row
+spine.addEventListener('click', stopIfPlaying);
+mapPinsGroup.addEventListener('click', stopIfPlaying);
+durChart.addEventListener('click', stopIfPlaying);
+function stopIfPlaying(e){
+  if(playing && e.target.closest && !e.target.closest('#playBtn')){
+    playing = false;
+    playBtn.classList.remove('playing');
+    playLabel.textContent = 'Walk through time';
+    playIcon.style.background = 'none';
+    playIcon.style.width = '0';
+    playIcon.style.height = '0';
+    playIcon.style.borderLeft = '8px solid var(--ivory)';
+    clearInterval(playTimer);
+  }
+}
+</script>
+</body>
+</html>
